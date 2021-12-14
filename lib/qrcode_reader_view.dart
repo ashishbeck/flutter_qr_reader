@@ -8,14 +8,14 @@ import 'package:image_picker/image_picker.dart';
 /// 使用前需已经获取相关权限
 /// Relevant privileges must be obtained before use
 class QrcodeReaderView extends StatefulWidget {
-  final Widget? headerWidget;
-  final Future Function(String?, String?) onScan;
+  final Widget headerWidget;
+  final Future Function(String, String) onScan;
   final double scanBoxRatio;
   final Color boxLineColor;
-  final Widget? helpWidget;
+  final Widget helpWidget;
   QrcodeReaderView({
-    Key? key,
-    required this.onScan,
+    Key key,
+    @required this.onScan,
     this.headerWidget,
     this.boxLineColor = Colors.cyanAccent,
     this.helpWidget,
@@ -33,10 +33,10 @@ class QrcodeReaderView extends StatefulWidget {
 /// ```
 class QrcodeReaderViewState extends State<QrcodeReaderView>
     with TickerProviderStateMixin {
-  late QrReaderViewController _controller;
-  AnimationController? _animationController;
-  bool? openFlashlight;
-  Timer? _timer;
+  QrReaderViewController _controller;
+  AnimationController _animationController;
+  bool openFlashlight;
+  Timer _timer;
   @override
   void initState() {
     super.initState();
@@ -49,7 +49,7 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
       _animationController = AnimationController(
           vsync: this, duration: Duration(milliseconds: 1000));
     });
-    _animationController!
+    _animationController
       ..addListener(_upState)
       ..addStatusListener((state) {
         if (state == AnimationStatus.completed) {
@@ -62,7 +62,7 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
           });
         }
       });
-    _animationController!.forward(from: 0.0);
+    _animationController.forward(from: 0.0);
   }
 
   void _clearAnimation() {
@@ -101,7 +101,7 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
     _controller.stopCamera();
   }
 
-  Future<bool?> setFlashlight() async {
+  Future<bool> setFlashlight() async {
     openFlashlight = await _controller.setFlashlight();
     setState(() {});
     return openFlashlight;
@@ -154,7 +154,7 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
                 callback: _onCreateController,
               ),
             ),
-            if (widget.headerWidget != null) widget.headerWidget!,
+            if (widget.headerWidget != null) widget.headerWidget,
             Positioned(
               left: (constraints.maxWidth - qrScanSize) / 2,
               top: (constraints.maxHeight - qrScanSize) * 0.333333,
@@ -180,25 +180,25 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
                 alignment: Alignment.center,
                 child: DefaultTextStyle(
                   style: TextStyle(color: Colors.white),
-                  child: widget.helpWidget ?? Text("请将二维码置于方框中"),
+                  child: widget.helpWidget ?? Text("请将二维码置于方框中 1"),
                 ),
               ),
             ),
-            Positioned(
-              top: (constraints.maxHeight - qrScanSize) * 0.333333 +
-                  qrScanSize -
-                  12 -
-                  35,
-              width: constraints.maxWidth,
-              child: Align(
-                alignment: Alignment.center,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: setFlashlight,
-                  child: openFlashlight! ? flashOpen : flashClose,
-                ),
-              ),
-            ),
+            // Positioned(
+            //   top: (constraints.maxHeight - qrScanSize) * 0.333333 +
+            //       qrScanSize -
+            //       12 -
+            //       35,
+            //   width: constraints.maxWidth,
+            //   child: Align(
+            //     alignment: Alignment.center,
+            //     child: GestureDetector(
+            //       behavior: HitTestBehavior.translucent,
+            //       onTap: setFlashlight,
+            //       child: openFlashlight ? flashOpen : flashClose,
+            //     ),
+            //   ),
+            // ),
             Positioned(
               width: constraints.maxWidth,
               bottom: constraints.maxHeight == mediaQuery.size.height
@@ -240,7 +240,12 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
                       color: Colors.white54,
                     ),
                   ),
-                  SizedBox(width: 45, height: 45),
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: setFlashlight,
+                    child: openFlashlight ? flashOpen : flashClose,
+                  ),
+                  // SizedBox(width: 45, height: 45),
                 ],
               ),
             )
@@ -260,18 +265,19 @@ class QrcodeReaderViewState extends State<QrcodeReaderView>
 class QrScanBoxPainter extends CustomPainter {
   final double animationValue;
   final bool isForward;
-  final Color? boxLineColor;
+  final Color boxLineColor;
 
   QrScanBoxPainter(
-      {required this.animationValue,
-      required this.isForward,
+      {@required this.animationValue,
+      @required this.isForward,
       this.boxLineColor})
       : assert(animationValue != null),
         assert(isForward != null);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final borderRadius = BorderRadius.all(Radius.circular(12)).toRRect(
+    final double radius = 30;
+    final borderRadius = BorderRadius.all(Radius.circular(radius)).toRRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
     );
     canvas.drawRRect(
@@ -288,30 +294,30 @@ class QrScanBoxPainter extends CustomPainter {
     final path = new Path();
     // leftTop
     path.moveTo(0, 50);
-    path.lineTo(0, 12);
-    path.quadraticBezierTo(0, 0, 12, 0);
+    path.lineTo(0, radius);
+    path.quadraticBezierTo(0, 0, radius, 0);
     path.lineTo(50, 0);
     // rightTop
     path.moveTo(size.width - 50, 0);
-    path.lineTo(size.width - 12, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, 12);
+    path.lineTo(size.width - radius, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, radius);
     path.lineTo(size.width, 50);
     // rightBottom
     path.moveTo(size.width, size.height - 50);
-    path.lineTo(size.width, size.height - 12);
+    path.lineTo(size.width, size.height - radius);
     path.quadraticBezierTo(
-        size.width, size.height, size.width - 12, size.height);
+        size.width, size.height, size.width - radius, size.height);
     path.lineTo(size.width - 50, size.height);
     // leftBottom
     path.moveTo(50, size.height);
-    path.lineTo(12, size.height);
-    path.quadraticBezierTo(0, size.height, 0, size.height - 12);
+    path.lineTo(radius, size.height);
+    path.quadraticBezierTo(0, size.height, 0, size.height - radius);
     path.lineTo(0, size.height - 50);
 
     canvas.drawPath(path, borderPaint);
 
     canvas.clipRRect(
-        BorderRadius.all(Radius.circular(12)).toRRect(Offset.zero & size));
+        BorderRadius.all(Radius.circular(radius)).toRRect(Offset.zero & size));
 
     // 绘制横向网格
     final linePaint = Paint();
@@ -319,7 +325,7 @@ class QrScanBoxPainter extends CustomPainter {
     final leftPress = (size.height + lineSize) * animationValue - lineSize;
     linePaint.style = PaintingStyle.stroke;
     linePaint.shader = LinearGradient(
-      colors: [Colors.transparent, boxLineColor!],
+      colors: [Colors.transparent, boxLineColor],
       begin: isForward ? Alignment.topCenter : Alignment(0.0, 2.0),
       end: isForward ? Alignment(0.0, 0.5) : Alignment.topCenter,
     ).createShader(Rect.fromLTWH(0, leftPress, size.width, lineSize));
